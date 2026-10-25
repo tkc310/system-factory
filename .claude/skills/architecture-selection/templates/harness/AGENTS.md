@@ -6,7 +6,7 @@
 
 - `ARCHITECTURE.md`: 構造の段階([小規模 / 中規模以上])、技術スタック、feature の一覧
 - `docs/adr/`: 決定とその理由。ADR と矛盾する変更をするときは、先に新しい ADR を提案する
-- 作業する feature の `README.md` と `AGENTS.md`(中規模以上は `src/server/features/<feature>/`)
+- 作業する feature の `README.md` と `AGENTS.md`(中規模以上は `src/api/features/<feature>/`)
 - 画面を作るとき: `DESIGN.md` と、使っているデザインシステムの DESIGN.md(ARCHITECTURE.md の「技術スタック」のデザインシステムの行に書いた場所)
 
 ## コマンド
@@ -34,7 +34,7 @@
 - 期待する振る舞いをテストに先に書き、それを満たす実装を書く。
 - `make check` が通らない状態で完了と報告しない。
 - 検査を通すためにルールを無効化しない(lint の無効化コメント、依存ルールの除外、型アサーション)。必要なら理由を添えて確認する。
-- `modules/` や技術の層(`domain/`、`application/`、`infrastructure/`、`ports.ts`、リポジトリ層)を作らない。ワークスペース(`apps/`、`packages/`、`pnpm-workspace.yaml` の `packages`)も作らない。必要に感じたら ADR の昇格条件を確かめ、提案する。
+- `modules/` や技術の層(`domain/`、`application/`、`infrastructure/`、`ports.ts`、feature の外のリポジトリ層)を作らない。ドメインモデルを `src/shared/` に置かない(中規模以上は `src/api/features/<feature>/entity.ts`)。ワークスペース(`apps/`、`packages/`、`pnpm-workspace.yaml` の `packages`)も作らない。必要に感じたら ADR の昇格条件を確かめ、提案する。
 
 ## 書き方
 

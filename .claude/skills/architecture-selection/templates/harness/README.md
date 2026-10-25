@@ -58,8 +58,8 @@
 2. 次の境界違反を一時的に置き、`make lint-deps` が失敗することを確かめてから消す。
    - 小規模: `src/app/` から `src/features/<f>/queries/` を直接 import する
    - 小規模で画面があるとき: feature の `ui/` から同じ feature の `queries/` を import する(`ui-scope`)
-   - 中規模以上: ある feature の query から、別の feature の `tables.ts` を import する。`src/shared/features/<f>/` から `drizzle-orm` か `node:fs` を import する
-   - 中規模以上で画面があるとき: `src/components/features/<f>/` から `src/server/features/<f>/index.ts` を import する(`components-no-server`)
+   - 中規模以上: ある feature の query から、別の feature の `tables.ts` を import する。command から `drizzle-orm` を import する(`orm-only-in-repository`)。`entity.ts` か `src/shared/features/<f>/` から `node:fs` を import する
+   - 中規模以上で画面があるとき: `src/components/features/<f>/` から `src/api/features/<f>/index.ts` を import する(`components-no-api`)
    - 画面があるとき: `make lint` では、3 階層以上さかのぼる相対パスの import(`../../../`)が失敗することも確かめる
 3. `echo '{"tool_input":{"file_path":"db/migrations/0001.sql"}}' | scripts/guard-paths.sh` が終了コード 2 で終わる。`.npmrc`、`pnpm-workspace.yaml`、`Makefile` でも同じく 2 で終わる。
 4. `make doctor` の registry が `https://npm.flatt.tech/` になっている。リポジトリの外の空のディレクトリで `npm view @panda-guard/test-malicious --registry=https://npm.flatt.tech/` を実行し、403 になる(Takumi Guard の検査用のパッケージ)。

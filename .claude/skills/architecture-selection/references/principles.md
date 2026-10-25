@@ -75,9 +75,9 @@ db/migrations/
 - Query 内での JOIN や集計(例: `listPosts` に `commentCount` を含める)は許可する。
 - N+1 問題を避ける。必要なデータは一度の query でまとめて取得する。
 
-## 中規模以上(features を画面・サーバー・共有に分ける)
+## 中規模以上(features を画面・API・共用に分ける)
 
-小規模と同じく層を作らず ORM を直接使い、コードを feature で分ける。そのうえで、複数人が並行して変更しても影響が feature に収まるよう、feature を**画面**(`src/components/features/`)、**サーバー**(`src/server/features/`)、**両方で使う純粋なコード**(`src/shared/features/`)の 3 か所に同じ名前で置き、**テーブルの所有** と **feature ごとの AGENTS.md** を加える。実例は [tkc310/yorozuya](https://github.com/tkc310/yorozuya) にある。
+小規模と同じく技術の層(`domain/`、`application/`、`infrastructure/`)を作らず、コードを feature で分ける。そのうえで、複数人が並行して変更しても影響が feature に収まるよう、feature を**画面**(`src/components/features/`)、**API**(`src/api/features/`)、**画面とサーバーで共用するコード**(`src/shared/features/`)の 3 か所に同じ名前で置き、**ドメインモデル(`entity.ts`)**、**リポジトリ(`repository.ts`)**、**テーブルの所有**、**feature ごとの AGENTS.md** を、すべて所属する feature の中に置く。実例は [tkc310/yorozuya](https://github.com/tkc310/yorozuya) にある(yorozuya では `src/api/` を `src/server/` と呼ぶ)。
 
 ### ディレクトリ構成
 
@@ -86,26 +86,28 @@ db/migrations/
 ```
 src/
   app/                    # ルーティング、画面、API の入口
-  components/             # 画面のコード。サーバーの処理を import しない
+  components/             # 画面のコード。src/api/ を import しない
     features/
       <feature>/          # この feature の画面と部品(component-structure.md)
         <Screen>/         # PascalCase のコンポーネントのディレクトリ(index.tsx)
     ui/                   # デザインシステムの D を選んだとき: 組み込んだ部品
-  server/                 # サーバーだけで動くコード。components/ を import しない
+  api/                    # サーバーだけで動くコード。components/ を import しない
     features/
       <feature>/
         index.ts          # 公開 API。service と query、入出力の型だけを外に出す
         README.md
         AGENTS.md         # エージェント向けの指示(用語集、禁止事項、参照実装)
+        entity.ts         # ドメインモデル。型と、不変条件・状態遷移・計算の純粋関数
+        repository.ts     # この feature のテーブルの読み書き。ORM を使うのはここと tables.ts だけ
+        tables.ts         # この feature が所有するテーブル定義
         commands/         # place-order.command.ts
         queries/          # get-order.query.ts
         services/         # 名詞単位の共通処理(stock.service.ts)
-        tables.ts         # この feature が所有するテーブル定義
     db/                   # DB 接続
     auth/                 # 認証・認可
-  shared/                 # 画面とサーバーの両方で使う純粋なコード。app/、components/features/、server/ を import しない
+  shared/                 # 画面とサーバーで共用するコード。app/、components/features/、api/ を import しない
     features/
-      <feature>/          # この feature の型、Zod のスキーマ、業務ルールの純粋関数(order.ts、order.test.ts)
+      <feature>/          # この feature の入力のバリデーション(Zod のスキーマ)、画面と API でやり取りするオブジェクトの型、定数
     lib/                  # feature に依らない純粋な共通の関数
     ui/                   # 画面を持つとき: 共通の部品。ds/ にデザインシステムの部品
     layouts/              # 画面を持つとき: 全画面に共通する枠
@@ -113,46 +115,67 @@ src/
 db/migrations/
 ```
 
-- 1 つの機能は、3 か所で同じ feature 名(kebab-case)にする。画面だけ、サーバーだけの feature では、使わない場所のディレクトリを作らない。
-  - 理由: feature 名で検索すれば、その機能の画面、サーバーの処理、ルールがすべて見つかる。
-- 呼び出しの向き、Service の切り出し、feature 間の呼び出しは、小規模の `src/features/<feature>/` を `src/server/features/<feature>/` と読み替えて同じルールに従う。
+- 1 つの機能は、3 か所で同じ feature 名(kebab-case)にする。画面だけ、API だけの feature では、使わない場所のディレクトリを作らない。
+  - 理由: feature 名で検索すれば、その機能の画面、API、共用のコードがすべて見つかる。
+- `entity.ts` と `repository.ts` が上限の行数([ファイルと関数の大きさ](#ファイルと関数の大きさ共通))を超えたら、同じ feature の中で `entities/<name>.entity.ts`、`repositories/<name>.repository.ts` に分ける。feature の外には出さない。
+- 呼び出しの向き、Service の切り出し、feature 間の呼び出しは、小規模の `src/features/<feature>/` を `src/api/features/<feature>/` と読み替えて同じルールに従う。
 
-### 画面とサーバーの分け方
+### 画面と API の分け方
 
 **必須**
 
-- `src/components/features/<feature>/` は、command、query、service、テーブル定義、`src/server/` を import しない。表示するデータは `app/` のルートが query で取得して props で渡し、変更の操作は `app/` が用意した関数(サーバーアクションやハンドラー)を props で受け取る([コンポーネントの構造](./component-structure.md))。
+- `src/components/features/<feature>/` は、`src/api/` を import しない。表示するデータは `app/` のルートが query で取得して props で渡し、変更の操作は `app/` が用意した関数(サーバーアクションやハンドラー)を props で受け取る([コンポーネントの構造](./component-structure.md))。
   - 理由: クライアントに届くコードにサーバーの処理や秘密情報が混ざらないことを、依存ルールで保証できる。
-- 画面とサーバーの両方で使う型、入力の Zod のスキーマ、表示や検証に使う計算は、`src/shared/features/<feature>/` に置く。
-- `src/shared/features/<feature>/` は純粋なコードだけにする。DB、ネットワーク、ファイル、現在時刻、乱数に触れず、I/O を行うライブラリと Node.js の組み込みモジュールを import しない。import してよいのは、同じ feature の `src/shared/features/<feature>/` と `src/shared/lib/` だけとする。
-  - 理由: モックなしでテストでき、画面からもサーバーからも同じルールを使える。
 
-### 業務ルールの置き場所
+### 共用のコード(src/shared/)
 
 **必須**
 
-- 状態遷移、不変条件、金額などの計算は、`src/shared/features/<feature>/` の純粋関数にまとめる。command は、その関数で判断してから書き込む。
-  - 理由: 不変条件が 1 か所にまとまり、DB を使わずに網羅的に検証できる。domain 層やポートを作らなくても、ルールを I/O から切り離せる。
-- 同じ業務ルールを command、query、画面に書き写さない。2 回目に現れたら `src/shared/features/<feature>/` に移す。
+- `src/shared/` には、画面とサーバーの**両方で使う**関数と値だけを置く。例: 入力のバリデーション(Zod のスキーマ)、画面と API でやり取りするオブジェクト(入出力の型)、定数(上限値、選択肢の一覧)。
+- ドメインモデル(エンティティ、不変条件、状態遷移)を `src/shared/` に置かない。ドメインモデルは `src/api/features/<feature>/entity.ts` に置く。
+  - 理由: 多くの場合、ドメインモデルは画面とサーバーで共通にならない。画面が要るのは表示と入力の形で、ドメインのルールではない。共用にすると、サーバーの都合の変更が画面に波及する。
+- 片方でしか使わないものは、使う側(`src/components/features/<feature>/` か `src/api/features/<feature>/`)に置く。2 か所目で使うことになってから `src/shared/` に移す。
+- `src/shared/features/<feature>/` は純粋なコードだけにする。DB、ネットワーク、ファイル、現在時刻、乱数に触れず、I/O を行うライブラリと Node.js の組み込みモジュールを import しない。import してよいのは、同じ feature の `src/shared/features/<feature>/` と `src/shared/lib/` だけとする。
+
+### ドメインモデル(entity.ts)
+
+**必須**
+
+- feature のドメインモデルは `src/api/features/<feature>/entity.ts` に定義する。エンティティの型と、不変条件、状態遷移、金額などの計算を純粋関数で書く。
+  - 理由: 不変条件が feature の中の 1 か所にまとまり、DB を使わずに網羅的に検証できる。
+- `entity.ts` は純粋なコードだけにする。import してよいのは、同じ feature の `src/shared/features/<feature>/`(バリデーションや定数)と `src/shared/lib/` だけとし、`repository.ts`、`tables.ts`、ORM、I/O を行うライブラリを import しない。
+- command は、`repository.ts` で読む → `entity.ts` の関数で判断する → `repository.ts` で書く、の順に書く。同じ業務ルールを command、query、service に書き写さない。
+- `entity.ts` の型を `index.ts` から公開しない。他の feature と画面には、`index.ts` の query が返すプレーンなデータを渡す。
 
 **推奨**
 
 - 不変条件(合計金額が負にならない、など)は、fast-check によるプロパティベーステストで検証する。
 
+### リポジトリ(repository.ts)
+
+**必須**
+
+- feature のテーブルの読み書きは、その feature の `src/api/features/<feature>/repository.ts` にまとめる。リポジトリを feature の外(`src/api/features/repository.ts` や `src/api/repositories/`)に置かない。
+  - 理由: 書き込みの経路が feature ごとに 1 つに決まり、テーブルの所有を依存ルールで強制できる。
+- feature の中で ORM と `src/api/db/` を import してよいのは、`repository.ts` と `tables.ts` だけとする。command、query、service は `repository.ts` の関数を呼ぶ。
+- リポジトリは具体的な関数の集まりにする。インターフェース、抽象クラス、DI コンテナは作らない([間接化](#間接化共通))。
+- 書き込みの関数は `entity.ts` の型を受け取り、読み取りの関数は `entity.ts` の型か、query が返す形のプレーンなデータを返す。ORM の行の型を外に出さない。
+- 一つの command のトランザクションは、`repository.ts` が用意する関数(`withTransaction` など)で張る。
+
 ### テーブルの所有
 
 **必須**
 
-- 各 feature は、自分の `tables.ts` のテーブルだけを読み書きする。他の feature のテーブルへの JOIN と外部キーを作らない。テーブル名には feature の接頭辞を付けるか、feature ごとにスキーマを分ける。
+- 各 feature は、自分の `tables.ts` のテーブルだけを、自分の `repository.ts` から読み書きする。他の feature のテーブルへの JOIN と外部キーを作らない。テーブル名には feature の接頭辞を付けるか、feature ごとにスキーマを分ける。
 - 他の feature のデータは、その feature の `index.ts` が公開する query で読む。
-  - 理由: `tables.ts` を他の feature から import できないので、JOIN の禁止を依存ルールで強制できる。feature を後で切り出すときの障害(共有テーブル、共有トランザクション)も生まれない。
-- マイグレーションツールには、各 feature の `tables.ts` をまとめて渡す(例: drizzle-kit の `schema` に `./src/server/features/*/tables.ts` を指定)。集約用のファイルは作らない。
+  - 理由: `tables.ts` と `repository.ts` を他の feature から import できないので、JOIN の禁止を依存ルールで強制できる。feature を後で切り出すときの障害(共有テーブル、共有トランザクション)も生まれない。
+- マイグレーションツールには、各 feature の `tables.ts` をまとめて渡す(例: drizzle-kit の `schema` に `./src/api/features/*/tables.ts` を指定)。集約用のファイルは作らない。
 
 ### feature ごとの AGENTS.md
 
 **必須**
 
-- 各 feature に短い `AGENTS.md` を `src/server/features/<feature>/AGENTS.md` に置く(雛形は `templates/feature-AGENTS.md`)。画面と共有のコードの置き場所、禁止事項、用語集、参照実装を簡潔に示す。README と重複する内容は書かず、エージェント固有の指示に絞る。
+- 各 feature に短い `AGENTS.md` を `src/api/features/<feature>/AGENTS.md` に置く(雛形は `templates/feature-AGENTS.md`)。画面と共用のコードの置き場所、禁止事項、用語集、参照実装を簡潔に示す。README と重複する内容は書かず、エージェント固有の指示に絞る。
   - 理由: 多人数で開発するとき、feature ごとの文脈とルールをエージェントに伝える手段が必要になる。
 
 ## ワークスペースを使わない(共通)
@@ -188,15 +211,16 @@ db/migrations/
 
 | import する側 | import してよい先 |
 | --- | --- |
-| `app/` | `server/features/<feature>/` の `index.ts` と `commands/`、`components/`、`shared/`、`server/auth/` |
-| `server/features/A/` の外から(`app/` を除く) | `server/features/A/index.ts` だけ |
-| `server/features/A/` の `commands/`、`queries/` | 同じ feature の `services/` と `tables.ts`、`shared/features/A/`、他 feature の `index.ts`(service と query だけ)、`server/db/`、`server/auth/`、`shared/lib/` |
-| `server/features/A/services/` | 同じ feature の `services/` と `tables.ts`、`shared/features/A/`、他 feature の `index.ts`(service と query だけ)、`server/db/`、`shared/lib/` |
-| `components/features/A/` | 同じ feature の `components/features/A/`、`shared/features/A/`、`shared/ui/`、`shared/lib/`(D のときは `components/ui/`)。`server/` と他の feature は不可 |
+| `app/` | `api/features/<feature>/` の `index.ts` と `commands/`、`components/`、`shared/`、`api/auth/` |
+| `api/features/A/` の外から(`app/` を除く) | `api/features/A/index.ts` だけ |
+| `api/features/A/` の `commands/`、`queries/`、`services/` | 同じ feature の `services/`、`entity.ts`、`repository.ts`、`shared/features/A/`、他 feature の `index.ts`(service と query だけ)、`api/auth/`、`shared/lib/`。ORM、`tables.ts`、`api/db/` は不可 |
+| `api/features/A/repository.ts` | 同じ feature の `entity.ts` と `tables.ts`、ORM、`api/db/`、`shared/features/A/`、`shared/lib/` |
+| `api/features/A/entity.ts` | `shared/features/A/`、`shared/lib/`(I/O を行うライブラリは不可) |
+| `components/features/A/` | 同じ feature の `components/features/A/`、`shared/features/A/`、`shared/ui/`、`shared/lib/`(D のときは `components/ui/`)。`api/` と他の feature は不可 |
 | `shared/features/A/` | `shared/features/A/`、`shared/lib/` |
 | `shared/ui/` | `shared/ui/`、`shared/lib/` |
 | `shared/` | `shared/`(`shared/features/` は同じ feature だけ) |
-| `server/db/`、`server/auth/` | `server/db/`、`server/auth/`、`shared/lib/` |
+| `api/db/`、`api/auth/` | `api/db/`、`api/auth/`、`shared/lib/` |
 
 - 循環依存を作らない。
   - 理由: 依存が一方向なら、変更の影響範囲を import の向きから判断できる。
@@ -205,14 +229,14 @@ db/migrations/
 
 **必須**
 
-- feature が外に出すものは `index.ts`(小規模は `src/features/<feature>/index.ts`、中規模以上は `src/server/features/<feature>/index.ts`)に列挙する。
+- feature が外に出すものは `index.ts`(小規模は `src/features/<feature>/index.ts`、中規模以上は `src/api/features/<feature>/index.ts`)に列挙する。
   - `service` と `query`、入出力の型だけを公開する。`command` は公開せず、`app/` が `commands/` のファイルを直接 import する。
     - 理由: `index.ts` に command を載せると他の feature からも呼べてしまい、「command は `app/` からだけ呼ぶ」を依存ルールで強制できない。
-  - テーブル定義や ORM のエンティティは出さない。
+  - テーブル定義、ORM のエンティティ、中規模以上の `entity.ts` の型と `repository.ts` は出さない。
   - 理由: エージェントは `index.ts` だけを読めば、その feature の使い方が分かる。
 - `index.ts` 以外に再エクスポート用のファイル(barrel)を作らない。中規模以上の `src/components/features/<feature>/` と `src/shared/features/<feature>/` にも `index.ts` を置かず、使う側はファイルを直接 import する。
   - 理由: 入口が一つなら、利用箇所を検索で漏れなく見つけられる。
-- 公開 API の入出力は、Zod のスキーマを持つプレーンなデータにする。クラスのインスタンス、関数、ORM のエンティティを渡さない。中規模以上では、そのスキーマを `src/shared/features/<feature>/` に置き、画面とサーバーで同じものを使う。
+- 公開 API の入出力は、Zod のスキーマを持つプレーンなデータにする。クラスのインスタンス、関数、ORM のエンティティを渡さない。中規模以上では、画面も使う入力のスキーマを `src/shared/features/<feature>/` に置き、画面とサーバーで同じものを使う。
 
 ## ファイルと関数の大きさ(共通)
 
@@ -235,9 +259,10 @@ db/migrations/
 
 **必須**
 
-- インフラ層を作らず command / query から直接 ORM を使うため、ports、リポジトリ層、DI コンテナは作らない。一つのリクエストが通る経路は `app/` → command / query → service(中規模以上は加えて `src/shared/features/` の純粋関数)に固定する。
-- 実装が一つしかない内部の処理に、インターフェースや抽象クラスを作らない。
-  - 理由: 呼び出しを追うたびに実装を探す手間が増え、エージェントが読むファイルも増える。
+- ports、インターフェース、抽象クラス、DI コンテナは作らない。実装が一つしかない処理に間接化を足さない。
+- 小規模では、リポジトリを作らず command / query から直接 ORM を使う。一つのリクエストが通る経路は `app/` → command / query → service に固定する。
+- 中規模以上では、ORM を使う場所を feature の中の `repository.ts` に限る。一つのリクエストが通る経路は `app/` → command / query → service → `entity.ts` と `repository.ts` に固定する。
+  - 理由: 呼び出しを追うたびに実装を探す手間が増え、エージェントが読むファイルも増える。中規模以上でリポジトリを置くのは抽象化のためではなく、テーブルの所有と書き込みの経路を feature ごとに 1 つにするためである。
 
 **推奨**
 
@@ -247,5 +272,5 @@ db/migrations/
 
 **必須**
 
-- 各 feature に `README.md` を置く(小規模は `src/features/<feature>/`、中規模以上は `src/server/features/<feature>/`)。責務(一文)、公開する API、依存する feature、所有するテーブルを書く。中規模以上では、画面と共有のコードの置き場所も書く。
+- 各 feature に `README.md` を置く(小規模は `src/features/<feature>/`、中規模以上は `src/api/features/<feature>/`)。責務(一文)、公開する API、依存する feature、所有するテーブルを書く。中規模以上では、画面と共用のコードの置き場所も書く。
   - 理由: エージェントと人間の両方が、コードを読む前に feature の範囲を確認できる。

@@ -5,7 +5,7 @@
 | 段階 | 形 | 層 | 典型的な案件(判定は下の「判定」に従う) |
 | --- | --- | --- | --- |
 | 小規模 | `src/features/<feature>/` の Vertical Slice + CQS。1 つの feature の画面とサーバーの処理を 1 つのディレクトリに置く | なし。command / query から ORM を直接使う | 1〜2 人、業務領域が 2 つ以下 |
-| 中規模以上 | `src/components/features/`、`src/server/features/`、`src/shared/features/` の 3 か所に、同じ名前の feature を置く。テーブルの所有と feature ごとの `AGENTS.md` を加える | なし。小規模と同じく ORM を直接使う | 3 人以上、または独立した業務領域が 3 つ以上 |
+| 中規模以上 | `src/components/features/`、`src/api/features/`、`src/shared/features/` の 3 か所に、同じ名前の feature を置く。ドメインモデル(`entity.ts`)、リポジトリ(`repository.ts`)、テーブルの所有、feature ごとの `AGENTS.md` を feature の中に加える | 技術の層はなし。ORM は feature の中の `repository.ts` だけが使う | 3 人以上、または独立した業務領域が 3 つ以上 |
 
 - どちらの段階でも、モノレポのワークスペース(pnpm の `packages`、`apps/` と `packages/` への分割)を使わない。1 つのリポジトリを 1 つのパッケージにする([構造](./principles.md#ワークスペースを使わない共通))。
 
@@ -21,25 +21,26 @@
 - 判定に使った回答と、選んだ段階を ARCHITECTURE.md と ADR に書く。
 - 境界上にあり、どちらも同程度に妥当なときは、ユーザーに確認する。回答が得られないときは小規模を選び、昇格の条件を ADR に書く。
   - 理由: ディレクトリの分け方は後から広げられるが、使われない区分けを畳む変更は影響範囲が広い。
-- 業務ルールが複雑(状態遷移、不変条件、計算)なことは、段階を上げる理由にしない。ルールは純粋関数に集め、段階に応じた置き場所に置く(小規模は `services/`、中規模以上は `src/shared/features/<feature>/`)。
+- 業務ルールが複雑(状態遷移、不変条件、計算)なことは、段階を上げる理由にしない。ルールは純粋関数に集め、段階に応じた置き場所に置く(小規模は `services/`、中規模以上は `src/api/features/<feature>/entity.ts`)。
   - 理由: ルールの複雑さに効くのは層の数ではなく、I/O から切り離した純粋関数とそのテストである。
 
 ## 段階による違い
 
 | 項目 | 小規模 | 中規模以上 |
 | --- | --- | --- |
-| feature の置き場所 | `src/features/<feature>/` の 1 か所 | 画面は `src/components/features/<feature>/`、サーバーの処理は `src/server/features/<feature>/`、両方で使う型・スキーマ・純粋関数は `src/shared/features/<feature>/` |
-| 公開 API(`index.ts`) | `src/features/<feature>/index.ts`。query と service | `src/server/features/<feature>/index.ts`。query と service、入出力の型 |
+| feature の置き場所 | `src/features/<feature>/` の 1 か所 | 画面は `src/components/features/<feature>/`、サーバーの処理は `src/api/features/<feature>/`、画面とサーバーで共用するバリデーション・オブジェクト・定数は `src/shared/features/<feature>/` |
+| 公開 API(`index.ts`) | `src/features/<feature>/index.ts`。query と service | `src/api/features/<feature>/index.ts`。query と service、入出力の型 |
 | 他の feature の command を呼ぶ | 不可(`app/` からだけ) | 不可(`app/` からだけ) |
 | テーブル | 書き込みは自分の feature が所有するテーブルだけ。query の JOIN は可 | 自分の feature のテーブルだけを読み書きする。他の feature への JOIN と外部キーは作らない |
-| テーブル定義の置き場所 | `src/shared/db/schema/` | `src/server/features/<feature>/tables.ts` |
-| DB 接続と認証 | `src/shared/db/`、`src/shared/auth/` | `src/server/db/`、`src/server/auth/` |
-| 業務ルール(純粋関数) | `services/` | `src/shared/features/<feature>/` |
-| feature ごとの `AGENTS.md` | 不要 | 必須(`src/server/features/<feature>/AGENTS.md`) |
+| テーブル定義の置き場所 | `src/shared/db/schema/` | `src/api/features/<feature>/tables.ts` |
+| DB 接続と認証 | `src/shared/db/`、`src/shared/auth/` | `src/api/db/`、`src/api/auth/` |
+| ドメインモデルと業務ルール(純粋関数) | `services/` | `src/api/features/<feature>/entity.ts` |
+| DB の読み書き | command / query から ORM を直接使う | `src/api/features/<feature>/repository.ts` だけが ORM を使う |
+| feature ごとの `AGENTS.md` | 不要 | 必須(`src/api/features/<feature>/AGENTS.md`) |
 | エラー処理 | 判別可能なユニオン | 判別可能なユニオン。期待される失敗が多い feature では neverthrow を検討([技術選定](./tech-selection.md#エラー処理の方針)) |
 | 依存ルール | `templates/harness/dependency-cruiser/small.cjs` | `templates/harness/dependency-cruiser/medium.cjs` |
 
-中規模以上で画面とサーバーの処理を分けて置くのは、クライアントに届くコードとサーバーだけで動くコードの境界を、ディレクトリと依存ルールで示すためである。3 か所の feature は同じ名前にするので、ある機能に関係するファイルは名前で検索すれば漏れなく見つかる。
+中規模以上で画面と API を分けて置くのは、クライアントに届くコードとサーバーだけで動くコードの境界を、ディレクトリと依存ルールで示すためである。3 か所の feature は同じ名前にするので、ある機能に関係するファイルは名前で検索すれば漏れなく見つかる。
 
 中規模以上でテーブルの所有を必須にするのは、複数人が並行して変更しても影響範囲が feature に収まり、後で [Go のサービスへ切り出せる状態](./tech-selection.md#go-のサービスへ切り出せる状態を保つ) を保てるからである。
 
@@ -55,7 +56,7 @@
 | --- | --- |
 | 小規模 → 中規模以上 | 開発者が 3 人以上になった。業務領域が 3 つ以上になった。feature 間の query の JOIN が増え、どの feature がどのテーブルを変えるか追えなくなった |
 
-- 昇格では、各 feature の `ui/` を `src/components/features/<feature>/` に、それ以外を `src/server/features/<feature>/` に移し、画面とサーバーの両方で使う型・スキーマ・純粋関数を `src/shared/features/<feature>/` に切り出す。テーブル定義は所有する feature の `tables.ts` に分ける。
+- 昇格では、各 feature の `ui/` を `src/components/features/<feature>/` に、それ以外を `src/api/features/<feature>/` に移す。`services/` の業務ルールを `entity.ts` に、command / query の ORM の呼び出しを `repository.ts` にまとめ、画面とサーバーで共用するバリデーションと定数だけを `src/shared/features/<feature>/` に切り出す。テーブル定義は所有する feature の `tables.ts` に分ける。
 
 **降格の目安**
 

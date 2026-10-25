@@ -5,9 +5,9 @@
 ## 前提と判定
 - [ ] ヒアリングの回答と、推測・仮定した項目(見直す条件つき)が ARCHITECTURE.md の「前提条件」にある
 - [ ] 構造の段階の判定に使った回答(人数、業務領域の数、ルールの複雑さと変更頻度)が ADR にある
-- [ ] 要件を満たす中で単純な段階を選んでいる。`modules/`、`domain/`、`ports.ts`、リポジトリ層、DI を作っていない
+- [ ] 要件を満たす中で単純な段階を選んでいる。`modules/`、`domain/`、`ports.ts`、feature の外のリポジトリ層、DI を作っていない
 - [ ] ワークスペースを使っていない(`package.json` はリポジトリ直下の 1 つだけ、`apps/` と `packages/` がない、`pnpm-workspace.yaml` に `packages` と `catalog` がない)
-- [ ] 中規模以上では、1 つの機能が `src/components/features/`、`src/server/features/`、`src/shared/features/` で同じ feature 名になっている
+- [ ] 中規模以上では、1 つの機能が `src/components/features/`、`src/api/features/`、`src/shared/features/` で同じ feature 名になっている
 - [ ] 昇格と降格の条件が ADR にある
 
 ## 技術スタックと性能

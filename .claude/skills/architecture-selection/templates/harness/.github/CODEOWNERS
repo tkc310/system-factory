@@ -2,7 +2,7 @@
 # ブランチ保護で「コードオーナーのレビューを必須にする」を有効にしないと、マージは止まらない。
 /db/migrations/                @[org/backend-leads]
 /src/shared/auth/              @[org/security]
-/src/server/auth/              @[org/security]
+/src/api/auth/              @[org/security]
 /src/generated/                @[org/backend-leads]
 /infra/                        @[org/platform]
 /Dockerfile                    @[org/platform]

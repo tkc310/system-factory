@@ -16,7 +16,7 @@
 | 小規模: `src/features/<feature>/ui/` | その feature の画面と、画面だけが使う部品。`app/` のルートから描く | 同じ feature の `ui/` と `index.ts`、`src/shared/ui/`、`src/shared/lib/` |
 | 中規模以上: `src/components/features/<feature>/` | その feature の画面と、画面だけが使う部品。`app/` のルートから描く | 同じ feature の `src/components/features/<feature>/` と `src/shared/features/<feature>/`、`src/shared/ui/`、`src/shared/lib/` |
 
-- feature の `ui/` は、command、query、service、テーブル定義を直接 import しない(中規模以上では `src/server/` のすべてを import しない)。表示するデータは `app/` のルートが query で取得して props で渡し、変更の操作は `app/` が用意した関数(サーバーアクションやハンドラー)を props で受け取る。
+- feature の `ui/` は、command、query、service、テーブル定義を直接 import しない(中規模以上では `src/api/` のすべてを import しない)。表示するデータは `app/` のルートが query で取得して props で渡し、変更の操作は `app/` が用意した関数(サーバーアクションやハンドラー)を props で受け取る。
   - 理由: 「command は `app/` からだけ呼ぶ」([構造](./principles.md#公開-api))を画面でも保てる。画面は props だけで描けるので、Storybook とテストでデータの層を用意しなくて済む。
 - feature の `ui/` はルーターに依存しない。パンくずリストの名前やパラメーターなど、ルートから得る値は `app/` のルートから props で渡す。ルーターに依存してよいのは `app/` と `src/shared/layouts/` だけにする。
 - 他の feature の `ui/` を import しない(既存の依存ルールで止まる)。複数の feature で使う部品は `src/shared/ui/` に移す。
@@ -39,7 +39,7 @@
 | それ以外の補助の関数 | kebab-case(`format-price.ts`) |
 
 - 例外: フレームワークがファイル名に意味を持たせる場所(ファイルベースのルーティングなど)は、フレームワークの規則に従う。`app/` のルートは小文字の kebab-case のままにする。
-- feature のディレクトリ自体(`src/features/order/`、`src/components/features/order/`)は、構造の命名のとおり kebab-case のままにする。中規模以上では、`src/server/features/` と `src/shared/features/` と同じ feature 名にする。
+- feature のディレクトリ自体(`src/features/order/`、`src/components/features/order/`)は、構造の命名のとおり kebab-case のままにする。中規模以上では、`src/api/features/` と `src/shared/features/` と同じ feature 名にする。
 
 ## ディレクトリの入れ子
 

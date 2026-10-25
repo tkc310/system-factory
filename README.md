@@ -3,7 +3,7 @@
 AI 駆動開発で使い回すための、設計と開発工程のボイラープレート。2 つのスキルで、新しいサービスのリポジトリに「アーキテクチャ」と「ソフトウェアファクトリー」を生成する。
 
 - フルスタック TypeScript を既定とし、性能が足りないと測定で分かったときだけ Effect → Worker → WebAssembly → Go の順に進む
-- 構造は、開発人数と業務領域の数で「小規模」と「中規模以上」の 2 段階から選ぶ。どちらもコードを feature で分け、モジュールや技術の層(ドメイン層、リポジトリ層)では分けない
+- 構造は、開発人数と業務領域の数で「小規模」と「中規模以上」の 2 段階から選ぶ。どちらもコードを feature で分け、モジュールや技術の層(ドメイン層、インフラ層)では分けない
 - 規模によらず、モノレポのワークスペース(`apps/`、`packages/`)を使わず、1 リポジトリ 1 パッケージにする
 - 画面があるときは、デザインシステムを「[8341-ui](https://github.com/tkc310/8341-ui) を使わない / 使う / ひな形に作って共有する / カスタマイズしてプロダクトに組み込む」から選ぶ
 - 境界は文章ではなく、型・oxlint・dependency-cruiser・テスト・フックで機械的に守る
@@ -103,7 +103,7 @@ cp -r .claude/skills/architecture-selection .claude/skills/software-factory <対
 | 段階 | 形 | 典型的な案件 |
 | --- | --- | --- |
 | 小規模 | `src/features/<feature>/` の Vertical Slice + CQS。層なし | 1〜2 人、業務領域が 2 つ以下 |
-| 中規模以上 | `src/components/features/`(画面)、`src/server/features/`(サーバー)、`src/shared/features/`(両方で使う純粋なコード)に同じ名前の feature を置く。テーブルの所有。層なし([yorozuya](https://github.com/tkc310/yorozuya) の構成) | 3 人以上、または業務領域が 3 つ以上 |
+| 中規模以上 | `src/components/features/`(画面)、`src/api/features/`(API。ドメインモデルの `entity.ts` とリポジトリの `repository.ts` を feature の中に置く)、`src/shared/features/`(画面とサーバーで共用するバリデーション・オブジェクト・定数)に同じ名前の feature を置く。テーブルの所有。技術の層なし([yorozuya](https://github.com/tkc310/yorozuya) の構成) | 3 人以上、または業務領域が 3 つ以上 |
 
 [software-factory](.claude/skills/software-factory/SKILL.md) は、architecture-selection の出力の上に、Claude Code 向けのソフトウェアファクトリーを載せる。
 

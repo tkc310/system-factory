@@ -38,7 +38,7 @@
 - [デザインシステムの選択](./design-system.md): 8341-ui を使わない、使う、ひな形に作って共有する、カスタマイズしてプロダクトに組み込む、の選び方と取り込み方。
 - [AI 駆動開発のための構造](./principles.md): 段階別のディレクトリ構成、公開 API、依存の向き、ファイルと関数の大きさ、命名、README と AGENTS.md。
 - [コンポーネントの構造](./component-structure.md): 画面のコンポーネントの置き場所、PascalCase のディレクトリと `index.tsx`、親子の入れ子、import の書き方。
-- [ユースケース層の CQS](./cqs.md): コマンドとクエリ、service、中規模以上の業務ルールの置き場所、リードモデル、feature 間イベント。
+- [ユースケース層の CQS](./cqs.md): コマンドとクエリ、service、中規模以上の entity.ts と repository.ts、リードモデル、feature 間イベント。
 - [品質ゲート](./quality-gates.md): 機械に保証させる項目と手段、CI の必須ステージ、人間のレビューで見る項目。
 - [テスト戦略](./testing-strategy.md): テストの粒度とツール、実行方針、AI 駆動開発における注意点。
 - [コーディング規約](./coding-conventions.md): t_wada のコメント法則、コマンドは make で叩く、命名と行数。

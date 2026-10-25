@@ -5,7 +5,8 @@ import { defineConfig } from "vitest/config";
 const BUSINESS_LOGIC = {
   small: ["src/features/*/{commands,queries,services}/**/*.ts"],
   medium: [
-    "src/server/features/*/{commands,queries,services}/**/*.ts",
+    "src/api/features/*/{commands,queries,services}/**/*.ts",
+    "src/api/features/*/{entity,repository}.ts",
     "src/shared/features/**/*.ts",
   ],
 } as const;
