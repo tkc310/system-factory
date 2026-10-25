@@ -81,7 +81,7 @@
 ## 品質ゲート
 
 - ファイルの行数上限: [300]、関数の行数上限: [50]
-- カバレッジの閾値(command / query / service、中規模以上は加えて src/shared/features/): [80%]
+- カバレッジの閾値(command / query / service、中規模以上は加えて entity.ts、repository.ts、src/shared/features/): [80%]
 
 ## 編集制約
 

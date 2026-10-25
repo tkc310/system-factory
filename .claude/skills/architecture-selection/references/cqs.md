@@ -2,7 +2,7 @@
 
 この文書は、ユースケース層のハンドラーを、コマンドとクエリに分けるルールを並べる。コマンドは状態を変え、ドメインのデータを返さない。クエリは状態を変えず、データを返す。分けておくと、ハンドラーの名前と置き場所だけで副作用の有無が分かり、レビューで確認する観点もハンドラーの種類ごとに決まる。
 
-構造の段階([構造の段階の選び方](./scale-selection.md))によらず、同じルールを適用する。domain 層と infrastructure 層は作らず、command と query から ORM を直接使う。中規模以上では、`src/features/<feature>/` を `src/server/features/<feature>/` と読み替え、[中規模以上の差分](#中規模以上の差分) も読む。
+構造の段階([構造の段階の選び方](./scale-selection.md))によらず、同じルールを適用する。domain 層と infrastructure 層は作らない。小規模では command と query から ORM を直接使う。中規模以上では、ORM を feature の中の `repository.ts` に限り、`src/features/<feature>/` を `src/api/features/<feature>/` と読み替え、[中規模以上の差分](#中規模以上の差分) も読む。
 
 UI のイベントハンドラーと純粋関数は、この文書の対象ではない。
 
@@ -42,12 +42,14 @@ service の切り出し方と、feature 間で呼べるもの(service と query 
 
 [Command と Query](#command-と-query) のルール(ファイルの単位、入力の検証、戻り値、結果型、トランザクション)はそのまま適用する。違いは次のとおり。
 
-### 業務ルールと入力のスキーマ
+### ドメインモデル、リポジトリ、入力のスキーマ
 
 **必須**
 
-- command の入力の Zod のスキーマと、判断に使う業務ルールの純粋関数は、`src/shared/features/<feature>/` に置き、command から import する。画面の入力検証にも同じスキーマを使う。
-- command は、読み取り → `src/shared/features/<feature>/` の関数で判断 → 書き込み、の順に書く。判断の途中で I/O をしない。
+- 判断に使う業務ルール(不変条件、状態遷移、計算)は `src/api/features/<feature>/entity.ts` の純粋関数に置き、command から import する([構造](./principles.md#ドメインモデルentityts))。
+- command と query は ORM を直接使わず、同じ feature の `repository.ts` の関数で読み書きする([構造](./principles.md#リポジトリrepositoryts))。
+- 画面の入力検証にも使う入力の Zod のスキーマは `src/shared/features/<feature>/` に置き、command と画面で同じものを使う。サーバーだけで使うスキーマは command のファイルに書く。
+- command は、`repository.ts` で読む → `entity.ts` の関数で判断 → `repository.ts` で書く、の順に書く。判断の途中で I/O をしない。
   - 理由: 判断の部分を DB なしでテストでき、command のテストは書き込まれた内容と結果型の確認に絞れる。
 - neverthrow を採用したサービスでは、結果型を `Result` / `ResultAsync` で表す([エラー処理の方針](./tech-selection.md#エラー処理の方針))。
 
@@ -55,7 +57,8 @@ service の切り出し方と、feature 間で呼べるもの(service と query 
 
 **必須**
 
-- `src/shared/features/<feature>/` の関数は、モックなしで入力と出力を検証する。
+- `entity.ts` と `src/shared/features/<feature>/` の関数は、モックなしで入力と出力を検証する。
+- `repository.ts` は、テスト用のデータベースに対して検証する。
 - command と query は、テスト用のデータベースに対して検証する。command では書き込まれた内容と結果型を、query では返す値を確認する。
 
 ### リードモデルと CQRS

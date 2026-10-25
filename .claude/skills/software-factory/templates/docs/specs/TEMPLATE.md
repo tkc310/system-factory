@@ -29,7 +29,7 @@
 
 - 影響する feature: 
 - 編集してよいパス:
-  - `src/server/features/<feature>/...`(小規模は `src/features/<feature>/...`)
+  - `src/api/features/<feature>/...`(小規模は `src/features/<feature>/...`)
   - `src/components/features/<feature>/...`、`src/shared/features/<feature>/...`(中規模以上で使うとき)
   - `src/app/...`
 - 公開 API(`index.ts`)の変更: [なし / あり: 内容]

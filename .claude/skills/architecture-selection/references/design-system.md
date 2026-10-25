@@ -182,7 +182,7 @@
 - 保護パスに、生成物(`tokens.css`、`tailwind-theme.css`、`tokens.json`、`tw-merge-config.ts`、`tokens/primitive/color.tokens.json`)と検査の基準(`tokens/contrast.rules.json`)を足す([編集制約](./editing-constraints.md#保護パス))。
 - dependency-cruiser に次を足す。
   - `src/styles/foundation/` は `src/` のほかの場所を import しない
-  - `src/components/ui/` が使えるのは、ほかの部品と `src/styles/foundation/` だけ(テストとストーリーは `src/test/` も)。アプリのコード(feature、`src/shared/`、`src/server/`、入口)を import しない
+  - `src/components/ui/` が使えるのは、ほかの部品と `src/styles/foundation/` だけ(テストとストーリーは `src/test/` も)。アプリのコード(feature、`src/shared/`、`src/api/`、入口)を import しない
   - 部品同士と、アプリから部品へは、各ディレクトリの `index.tsx` を通す
   - Base UI(`@base-ui/react`)は `src/components/ui/` の中だけで使う
   - `src/shared/ui/` の import してよい先に、`src/components/ui/` と `src/styles/foundation/` を足す

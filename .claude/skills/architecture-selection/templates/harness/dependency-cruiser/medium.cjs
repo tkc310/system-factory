@@ -1,15 +1,20 @@
 /**
  * 構造「中規模以上」の依存ルール。references/principles.md の「依存の向き」の表をそのまま設定にしたもの。
- * feature を src/components/features/(画面)、src/server/features/(サーバー)、src/shared/features/(両方で使う純粋なコード)に
+ * feature を src/components/features/(画面)、src/api/features/(サーバー)、src/shared/features/(画面とサーバーで共用するバリデーション・オブジェクト・定数)に
  * 同じ名前で置く形に効く。対象リポジトリでは `.dependency-cruiser.cjs` として置く。
  * @type {import('dependency-cruiser').IConfiguration}
  */
-const S = "^src/server/features/";
+const A = "^src/api/features/";
 const C = "^src/components/features/";
 const P = "^src/shared/features/";
 
-/** src/shared/features/ と src/shared/lib/ が import してよい npm パッケージ(I/O を行わないもの)。必要に応じて足す。 */
+/** entity.ts、src/shared/features/、src/shared/lib/ が import してよい npm パッケージ(I/O を行わないもの)。必要に応じて足す。 */
 const PURE_PACKAGES = ["zod", "neverthrow"];
+
+/** ORM と DB ドライバー。feature の中では repository.ts と tables.ts だけが使う。採ったものに合わせる。 */
+const ORM_PACKAGES = ["drizzle-orm", "postgres", "pg"];
+
+const NPM_TYPES = ["npm", "npm-dev", "npm-peer", "npm-optional", "npm-no-pkg", "npm-unknown", "core"];
 
 module.exports = {
   forbidden: [
@@ -20,77 +25,105 @@ module.exports = {
       from: {},
       to: { circular: true },
     },
-    // ---- サーバー(src/server/features/) ----
+    // ---- サーバー(src/api/features/) ----
     {
       name: "public-api-only",
       severity: "error",
-      comment: "他の feature のサーバーの処理は index.ts からだけ使う。内部のファイルやテーブル定義を import しない。",
-      from: { path: `${S}([^/]+)/` },
-      to: { path: `${S}[^/]+/`, pathNot: [`${S}$1/`, `${S}[^/]+/index\\.ts$`] },
+      comment: "他の feature のサーバーの処理は index.ts からだけ使う。entity.ts、repository.ts、テーブル定義などの内部を import しない。",
+      from: { path: `${A}([^/]+)/` },
+      to: { path: `${A}[^/]+/`, pathNot: [`${A}$1/`, `${A}[^/]+/index\\.ts$`] },
     },
     {
       name: "outside-public-api-only",
       severity: "error",
-      comment: "src/server/features/ の外(app/ を除く)からは index.ts だけを使う。",
-      from: { pathNot: [S, "^src/app/"] },
-      to: { path: `${S}[^/]+/`, pathNot: `${S}[^/]+/index\\.ts$` },
+      comment: "src/api/features/ の外(app/ を除く)からは index.ts だけを使う。",
+      from: { pathNot: [A, "^src/app/"] },
+      to: { path: `${A}[^/]+/`, pathNot: `${A}[^/]+/index\\.ts$` },
     },
     {
       name: "app-entry-points",
       severity: "error",
-      comment: "app/ が src/server/features/ で使えるのは index.ts と commands/ だけ。",
+      comment: "app/ が src/api/features/ で使えるのは index.ts と commands/ だけ。",
       from: { path: "^src/app/" },
-      to: { path: `${S}[^/]+/`, pathNot: `${S}[^/]+/(index\\.ts$|commands/)` },
+      to: { path: `${A}[^/]+/`, pathNot: `${A}[^/]+/(index\\.ts$|commands/)` },
     },
     {
-      name: "index-does-not-export-commands",
+      name: "index-exports-public-only",
       severity: "error",
-      comment: "index.ts は command を公開しない。command は app/ からだけ呼ぶ。",
-      from: { path: `${S}[^/]+/index\\.ts$` },
-      to: { path: `${S}[^/]+/commands/` },
+      comment: "index.ts は command、repository.ts、tables.ts を公開しない。command は app/ からだけ呼ぶ。",
+      from: { path: `${A}[^/]+/index\\.ts$` },
+      to: { path: `${A}[^/]+/(commands/|repository\\.ts$|tables\\.ts$)` },
     },
     {
       name: "command-query-scope",
       severity: "error",
-      comment: "commands/ と queries/ が同じ feature の中で使えるのは services/ と tables.ts と、自分と同じディレクトリだけ。",
-      from: { path: `${S}([^/]+)/(commands|queries)/` },
-      to: { path: `${S}$1/`, pathNot: [`${S}$1/$2/`, `${S}$1/services/`, `${S}$1/tables\\.ts$`] },
+      comment: "commands/ と queries/ が同じ feature の中で使えるのは services/、entity.ts、repository.ts と、自分と同じディレクトリだけ。テーブル定義は repository.ts を通す。",
+      from: { path: `${A}([^/]+)/(commands|queries)/` },
+      to: { path: `${A}$1/`, pathNot: [`${A}$1/$2/`, `${A}$1/services/`, `${A}$1/(entity|repository)\\.ts$`] },
     },
     {
       name: "service-scope",
       severity: "error",
-      comment: "services/ が同じ feature の中で使えるのは services/ と tables.ts だけ。",
-      from: { path: `${S}([^/]+)/services/` },
-      to: { path: `${S}$1/`, pathNot: [`${S}$1/services/`, `${S}$1/tables\\.ts$`] },
+      comment: "services/ が同じ feature の中で使えるのは services/、entity.ts、repository.ts だけ。",
+      from: { path: `${A}([^/]+)/services/` },
+      to: { path: `${A}$1/`, pathNot: [`${A}$1/services/`, `${A}$1/(entity|repository)\\.ts$`] },
     },
     {
-      name: "server-own-shared-feature",
+      name: "repository-scope",
+      severity: "error",
+      comment: "repository.ts が同じ feature の中で使えるのは entity.ts と tables.ts だけ。",
+      from: { path: `${A}([^/]+)/repository\\.ts$` },
+      to: { path: `${A}$1/`, pathNot: `${A}$1/(entity|tables)\\.ts$` },
+    },
+    {
+      name: "entity-is-pure",
+      severity: "error",
+      comment: "entity.ts(ドメインモデル)が使えるのは、同じ feature の src/shared/features/ と src/shared/lib/ だけ。",
+      from: { path: `${A}([^/]+)/entity\\.ts$` },
+      to: { path: "^src/", pathNot: [`${P}$1/`, "^src/shared/lib/"] },
+    },
+    {
+      name: "entity-no-io-libraries",
+      severity: "error",
+      comment: "entity.ts は I/O を行うライブラリと Node.js の組み込みモジュールを使わない。",
+      from: { path: `${A}[^/]+/entity\\.ts$` },
+      to: { dependencyTypes: NPM_TYPES, pathNot: `node_modules/(${PURE_PACKAGES.join("|")})/` },
+    },
+    {
+      name: "orm-only-in-repository",
+      severity: "error",
+      comment: "feature の中で ORM と DB 接続を使うのは repository.ts と tables.ts だけ。読み書きは repository.ts を通す。",
+      from: { path: A, pathNot: [`${A}[^/]+/(repository|tables)\\.ts$`, "\\.test\\.tsx?$"] },
+      to: { path: [`node_modules/(${ORM_PACKAGES.join("|")})/`, "^src/api/db/"] },
+    },
+    {
+      name: "api-own-shared-feature",
       severity: "error",
       comment: "サーバーの feature が使える src/shared/features/ は、同じ名前の feature だけ。",
-      from: { path: `${S}([^/]+)/` },
+      from: { path: `${A}([^/]+)/` },
       to: { path: P, pathNot: `${P}$1/` },
     },
     {
-      name: "server-no-components",
+      name: "api-no-components",
       severity: "error",
-      comment: "src/server/ は画面のコード(src/components/)と app/ を import しない。",
-      from: { path: "^src/server/" },
+      comment: "src/api/ は画面のコード(src/components/)と app/ を import しない。",
+      from: { path: "^src/api/" },
       to: { path: "^src/(app|components)/" },
     },
     {
-      name: "server-infra-scope",
+      name: "api-infra-scope",
       severity: "error",
-      comment: "src/server/db/ と src/server/auth/ は feature を import しない。使えるのは src/server/db/、src/server/auth/、src/shared/lib/ だけ。",
-      from: { path: "^src/server/(db|auth)/" },
-      to: { path: "^src/", pathNot: ["^src/server/(db|auth)/", "^src/shared/lib/"] },
+      comment: "src/api/db/ と src/api/auth/ は feature を import しない。使えるのは src/api/db/、src/api/auth/、src/shared/lib/ だけ。",
+      from: { path: "^src/api/(db|auth)/" },
+      to: { path: "^src/", pathNot: ["^src/api/(db|auth)/", "^src/shared/lib/"] },
     },
     // ---- 画面(src/components/features/) ----
     {
-      name: "components-no-server",
+      name: "components-no-api",
       severity: "error",
-      comment: "画面は src/server/ を import しない。データは app/ から props で受け取る(component-structure.md)。",
+      comment: "画面は src/api/ を import しない。データは app/ から props で受け取る(component-structure.md)。",
       from: { path: "^src/components/" },
-      to: { path: "^src/server/" },
+      to: { path: "^src/api/" },
     },
     {
       name: "components-feature-scope",
@@ -106,13 +139,13 @@ module.exports = {
       from: { path: `${C}([^/]+)/` },
       to: { path: P, pathNot: `${P}$1/` },
     },
-    // ---- 共有(src/shared/) ----
+    // ---- 共用(src/shared/) ----
     {
       name: "shared-is-leaf",
       severity: "error",
-      comment: "src/shared/ は画面とサーバーの両方で使うコードだけ。app/、src/server/、src/components/features/ を import しない。",
+      comment: "src/shared/ は画面とサーバーで共用するコードだけ。app/、src/api/、src/components/features/ を import しない。",
       from: { path: "^src/shared/" },
-      to: { path: "^src/(app|server|components/features)/" },
+      to: { path: "^src/(app|api|components/features)/" },
     },
     {
       name: "shared-feature-scope",
@@ -126,10 +159,7 @@ module.exports = {
       severity: "error",
       comment: "src/shared/features/ と src/shared/lib/ は I/O を行うライブラリと Node.js の組み込みモジュールを使わない(テストを除く)。",
       from: { path: "^src/shared/(features|lib)/", pathNot: "\\.test\\.tsx?$" },
-      to: {
-        dependencyTypes: ["npm", "npm-dev", "npm-peer", "npm-optional", "npm-no-pkg", "npm-unknown", "core"],
-        pathNot: `node_modules/(${PURE_PACKAGES.join("|")})/`,
-      },
+      to: { dependencyTypes: NPM_TYPES, pathNot: `node_modules/(${PURE_PACKAGES.join("|")})/` },
     },
     {
       name: "shared-ui-scope",

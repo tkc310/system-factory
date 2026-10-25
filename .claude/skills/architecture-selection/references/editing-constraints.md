@@ -10,7 +10,7 @@
 
 | 作業 | 編集してよい範囲 |
 | --- | --- |
-| 機能の追加 | 対象の feature(小規模は `src/features/<feature>/`、中規模以上は `src/components/features/<feature>/`、`src/server/features/<feature>/`、`src/shared/features/<feature>/`)、`src/app/` の該当する入口 |
+| 機能の追加 | 対象の feature(小規模は `src/features/<feature>/`、中規模以上は `src/components/features/<feature>/`、`src/api/features/<feature>/`、`src/shared/features/<feature>/`)、`src/app/` の該当する入口 |
 | バグの修正 | 原因のある feature と、その再現テスト |
 | リファクタリング | 対象の feature の中だけ。公開 API(`index.ts`)を変えるときは確認する |
 | テストの追加 | `*.test.ts` とテスト用のヘルパー。実装は変えない |
@@ -24,7 +24,7 @@
 | パス | 理由 |
 | --- | --- |
 | `db/migrations/**` | 適用済みのマイグレーションを書き換えると、環境ごとにスキーマが食い違う。新規の追加も確認する |
-| `src/shared/auth/**`(中規模以上は `src/server/auth/**`) | 認証・認可の誤りは、そのまま情報漏えいになる |
+| `src/shared/auth/**`(中規模以上は `src/api/auth/**`) | 認証・認可の誤りは、そのまま情報漏えいになる |
 | `src/generated/**` | 生成し直すと手の変更が消える。生成元を直す |
 | `infra/**`、`.github/**`、`Dockerfile` | 本番環境とデプロイの経路、CI のガードレールを変える |
 | `.env*` | 機密情報を含む |
@@ -55,7 +55,7 @@
 | 仕組み | 置き場所 | 強さ |
 | --- | --- | --- |
 | Cursor ルール | `.cursor/rules/*.mdc` | 指示。`globs` に合うファイルを扱うときに読み込まれる |
-| feature の AGENTS.md | 中規模以上の `src/server/features/<feature>/AGENTS.md` | 指示 |
+| feature の AGENTS.md | 中規模以上の `src/api/features/<feature>/AGENTS.md` | 指示 |
 | Cursor のフック | `.cursor/hooks.json` | エージェントの操作をブロックする。`preToolUse` で保護パスへの `Write` と `Delete` を、`beforeShellExecution` で危険なコマンドを拒否できる |
 | Claude Code のフック | `.claude/settings.json` | エージェントの操作をブロックする。`PreToolUse` で保護パスへの `Edit` と `Write` を拒否し、`PostToolUse` で整形と依存ルールの検査結果をエージェントに返せる |
 | Git フック | `lefthook.yml`(lefthook) | 手元のコミットを止める。`--no-verify` で回避できる |
@@ -95,7 +95,7 @@ alwaysApply: false
 ```
 /db/migrations/       @org/backend-leads
 /src/shared/auth/     @org/security
-/src/server/auth/     @org/security
+/src/api/auth/     @org/security
 /.github/             @org/platform
 /.cursor/             @org/platform
 ```

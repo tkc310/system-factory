@@ -9,7 +9,7 @@
 | 型の整合 | TypeScript の `strict` | 呼び出しの引数と戻り値の不一致 |
 | 外部入力の形 | Zod のスキーマによる parse | 不正な入力が内部に入ること |
 | 事前条件 | ブランド型(`Email`、`PositiveInt`) | 検証済みの値かどうか |
-| 副作用の位置 | 依存ルール(中規模以上の場合、`src/shared/features/` から I/O を import しない) | 純粋関数が I/O を行っていないか |
+| 副作用の位置 | 依存ルール(中規模以上の場合、`entity.ts` と `src/shared/features/` から I/O を import しない。ORM は `repository.ts` だけ) | 純粋関数が I/O を行っていないか |
 | feature の境界 | 依存ルール(公開 API 以外の import を禁止。中規模以上は、画面からサーバーの処理の import も禁止) | 内部実装への依存 |
 | 振る舞い | テスト | 既存の振る舞いが壊れていないか |
 | 書式と大きさ | フォーマッター、`max-lines` | 書式、ファイルの大きさ |
@@ -40,15 +40,15 @@
 
 **必須**
 
-- 構造が中規模以上の場合、`src/shared/features/` は純粋関数と型だけにする。データベース、ネットワーク、ファイル、現在時刻、乱数に触れる処理は、引数で受け取るか `src/server/features/` の command / query に置く。
-- 段階によらず `domain/` と `ports.ts` を置かず、I/O は command / query から直接行い、共通処理は service に出す。[構造](./principles.md) の「間接化」に従う。
+- 構造が中規模以上の場合、`entity.ts` と `src/shared/features/` は純粋関数と型だけにする。データベースに触れる処理は `repository.ts` に、ネットワーク、ファイル、現在時刻、乱数に触れる処理は command / query に置くか引数で受け取る。
+- 段階によらず `domain/` と `ports.ts` を置かない。小規模は I/O を command / query から直接行い、中規模以上は DB の読み書きを feature の中の `repository.ts` に限る。共通処理は service に出す。[構造](./principles.md) の「間接化」に従う。
 
 ## テスト
 
 **必須**
 
 - 追加・変更した command と query には、テストを付ける。層ごとのテストの書き方は [CQS](./cqs.md)、粒度、ツール、実行の方針は [テスト戦略](./testing-strategy.md) に従う。
-- カバレッジの閾値は、業務ロジックを含む層に設定する。command / query / service とし、中規模以上の場合は `src/shared/features/` も含める。目安は行カバレッジ 80% とし、サービスごとの値を ARCHITECTURE.md に書く。
+- カバレッジの閾値は、業務ロジックを含む層に設定する。command / query / service とし、中規模以上の場合は `entity.ts` と `src/shared/features/` も含める。目安は行カバレッジ 80% とし、サービスごとの値を ARCHITECTURE.md に書く。
   - 理由: 全体の数値で縛ると、UI や生成コードのテストで数値を満たせてしまい、業務ルールのテスト不足を見逃す。
 
 ## リンターとフォーマッター

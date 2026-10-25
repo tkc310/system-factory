@@ -6,7 +6,7 @@
 
 | 粒度 | ツール | 対象 | CI |
 | --- | --- | --- | --- |
-| ユニット | Vitest | 業務ロジック(command / query / service、中規模以上の `src/shared/features/`)、純粋関数、バリデーション | 含める |
+| ユニット | Vitest | 業務ロジック(command / query / service、中規模以上の `entity.ts` と `src/shared/features/`)、純粋関数、バリデーション | 含める |
 | 統合(コンポーネント) | Vitest + React Testing Library + happy-dom | 複数のコンポーネントの協調、ユーザーの操作を含む振る舞い、状態管理 | 含める |
 | 統合(API) | Vitest + Testcontainers(推奨) | データベースを含む API の動作。外部サービスは MSW でモックする | 含める |
 | E2E | Playwright | ユーザー登録からログイン、主要機能の利用までのような、業務上重要なフロー | 含めない |
