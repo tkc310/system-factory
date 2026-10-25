@@ -7,7 +7,7 @@ architecture-selection のハーネスを置いた後に置く。形式(A: GitHu
 | 雛形 | 置き場所 | 手順 |
 | --- | --- | --- |
 | `docs/factory/README.md`、`docs/factory/improve.md` | 同じパス | 角括弧を埋め、採った形式の行だけを残す |
-| `docs/specs/TEMPLATE.md` | 同じパス | 編集してよいパスの例を構造の段階に合わせる(S では `src/modules/<module>/` を `src/features/<feature>/` に) |
+| `docs/specs/TEMPLATE.md` | 同じパス | 編集してよいパスの例を構造の段階に合わせる(小規模では `src/features/<feature>/` だけにする) |
 | `claude/agents/*.md` | `.claude/agents/` | そのまま |
 | `claude/skills/*/SKILL.md` | `.claude/skills/<name>/SKILL.md` | そのまま |
 | `claude/hooks/*.sh` | `.claude/hooks/` | `chmod +x`。`jq` を使う |

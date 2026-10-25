@@ -19,7 +19,7 @@
 **必須**
 
 - 受け入れ条件が、テストに書き下せる形(前提 / 操作 / 結果)で列挙されている。
-- 影響するモジュール(S では feature)と、編集してよい範囲が書かれている。範囲は [編集制約](../../architecture-selection/references/editing-constraints.md) の作業の種類に合わせる。
+- 影響する feature と、編集してよい範囲が書かれている。範囲は [編集制約](../../architecture-selection/references/editing-constraints.md) の作業の種類に合わせる。
 - 承認が要る操作(マイグレーション、依存の追加、保護パスの編集など)が洗い出されている。
 - 未解決の質問がない。
 - 人が承認し、仕様の状態が「承認」になっている。

@@ -10,7 +10,7 @@ tools: Read, Grep, Glob, Edit, Write, Bash
 
 - 仕様の状態が「承認」であること。そうでなければ止めて人に伝える。
 - 仕様の「編集してよいパス」と「作業の種類」。この範囲の外を編集する必要が出たら、編集する前に止めて確認する。
-- 作業するモジュールの `README.md` と `AGENTS.md`。
+- 作業する feature の `README.md` と `AGENTS.md`。
 
 ## 手順
 

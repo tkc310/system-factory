@@ -1,13 +1,12 @@
 import { defineConfig } from "vitest/config";
 
 // カバレッジの閾値は、業務ロジックを含む層にだけ掛ける(ARCHITECTURE.md の「品質ゲート」)。
-// BUSINESS_LOGIC.slice を採った段階のキーに替え、使わないキーは消す。閾値は ARCHITECTURE.md の値に合わせる。
+// BUSINESS_LOGIC.small を採った段階のキーに替え、使わないキーは消す。閾値は ARCHITECTURE.md の値に合わせる。
 const BUSINESS_LOGIC = {
-  slice: ["src/features/*/{commands,queries,services}/**/*.ts"],
-  modular: ["src/modules/*/{commands,queries,services}/**/*.ts"],
-  layered: [
-    "src/modules/*/{domain,application}/**/*.ts",
-    "src/modules/*/{commands,queries,services}/**/*.ts",
+  small: ["src/features/*/{commands,queries,services}/**/*.ts"],
+  medium: [
+    "src/server/features/*/{commands,queries,services}/**/*.ts",
+    "src/shared/features/**/*.ts",
   ],
 } as const;
 
@@ -19,7 +18,7 @@ export default defineConfig({
     passWithNoTests: true,
     coverage: {
       provider: "v8",
-      include: [...BUSINESS_LOGIC.slice],
+      include: [...BUSINESS_LOGIC.small],
       exclude: ["**/*.test.{ts,tsx}"],
       thresholds: { lines: 80 },
     },

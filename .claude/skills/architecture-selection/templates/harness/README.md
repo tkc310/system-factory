@@ -10,12 +10,12 @@
 | --- | --- | --- |
 | `Makefile` | リポジトリ直下 | コマンドの入口([規約](../../references/coding-conventions.md#コマンドは-make-で叩く))。採らないターゲット(デザインシステムの B / C を使わないなら `ui-*`)は消す。D を選んだら `ds-generate` と `ds-check` を足し、`check` に `ds-check` を含める([デザインシステム](../../references/design-system.md#ハーネスに足すもの))。よく使うターゲットは AGENTS.md のコマンドの表にも書く |
 | `AGENTS.md`、`CLAUDE.md` | リポジトリ直下 | 角括弧を埋める。`CLAUDE.md` は `@AGENTS.md` を読み込むだけ |
-| `pnpm-workspace.yaml`、`.npmrc` | リポジトリ直下 | 依存の供給網の対策(`trustPolicy: no-downgrade`、`minimumReleaseAge`、`blockExoticSubdeps`、Takumi Guard)。依存を入れる前に、そのまま置く。モノレポなら `pnpm-workspace.yaml` に `packages` を足す。どちらにもトークンを書かない([セキュリティ](../../references/security.md#依存の供給網)) |
+| `pnpm-workspace.yaml`、`.npmrc` | リポジトリ直下 | 依存の供給網の対策(`trustPolicy: no-downgrade`、`minimumReleaseAge`、`blockExoticSubdeps`、Takumi Guard)。依存を入れる前に、そのまま置く。`pnpm-workspace.yaml` は pnpm の設定を書くためだけに置き、`packages` を足さない(段階によらずワークスペースを使わない。[構造](../../references/principles.md#ワークスペースを使わない共通))。どちらにもトークンを書かない([セキュリティ](../../references/security.md#依存の供給網)) |
 | `package.scripts.json` | `package.json` | 下の「package.json の作り方」に従う。ファイル自体は置かない |
 | `.node-version` | リポジトリ直下 | 新しく作り、最新の LTS の major(`make check-versions` で確かめる)を書く。CI もこの版を使う |
 | `tsconfig.json` | リポジトリ直下 | フレームワークの既定の設定があれば、`strict` 系のオプションをそちらに統合する |
 | `.oxlintrc.json`、`.oxfmtrc.json` | リポジトリ直下 | 置いたら `make lint` と `make format-check` を実行し、未対応のルール名や設定がないか確かめる。型情報を使うルール(`typescript/no-floating-promises`)が効いているかは、違反を一時的に置いて確かめる |
-| `dependency-cruiser/<段階>.cjs` | `.dependency-cruiser.cjs` | 採った段階(`slice` / `modular` / `layered`)の 1 つだけを置く。ディレクトリ自体はコピーしない |
+| `dependency-cruiser/<段階>.cjs` | `.dependency-cruiser.cjs` | 採った段階(小規模は `small`、中規模以上は `medium`)の 1 つだけを置く。ディレクトリ自体はコピーしない |
 | `vitest.config.ts` | リポジトリ直下 | `coverage.include` を採った段階のものにし、閾値を ARCHITECTURE.md に合わせる |
 | `lefthook.yml` | リポジトリ直下 | `make hooks` |
 | `.github/workflows/ci.yml` | 同じパス | ジョブ `check`(6 つのステージを含む)をブランチ保護の必須チェックに指定する |
@@ -41,7 +41,7 @@
 
 | 調べるもの | 比べる相手 |
 | --- | --- |
-| `package.json`(と `packages/*`、`apps/*`、pnpm の catalog)の依存と `packageManager` | npm の `latest`(安定版)。指定がプレリリース(`-rc` など)なら知らせる |
+| `package.json` の依存と `packageManager` | npm の `latest`(安定版)。指定がプレリリース(`-rc` など)なら知らせる |
 | Node.js(`.tool-versions`、`.nvmrc`、`.node-version`、`engines`) | 最新の LTS |
 | `.github/workflows/*.yml` の `uses: owner/repo@vN` | 各 Action の最新のリリースの major |
 | `components.json` の GitHub Pages のレジストリ(8341-ui など) | そのリポジトリの最新のリリース。URL に版(`/r/v<版>/`)がなければ知らせる |
@@ -56,13 +56,14 @@
 
 1. `make setup` の後、`src/` を作って(中身は空でよい)、`make check` が通る。`make check-versions` で古いものとプレリリースがない。
 2. 次の境界違反を一時的に置き、`make lint-deps` が失敗することを確かめてから消す。
-   - S: `src/app/` から `src/features/<f>/queries/` を直接 import する
-   - M: あるモジュールの query から、別のモジュールの `tables.ts` を import する
-   - L: `domain/` から `drizzle-orm` か `node:fs` を import する
-   - 画面があるとき: feature の `ui/` から同じ feature の `queries/` を import する(`ui-scope`)。`make lint` では、3 階層以上さかのぼる相対パスの import(`../../../`)が失敗することも確かめる
+   - 小規模: `src/app/` から `src/features/<f>/queries/` を直接 import する
+   - 小規模で画面があるとき: feature の `ui/` から同じ feature の `queries/` を import する(`ui-scope`)
+   - 中規模以上: ある feature の query から、別の feature の `tables.ts` を import する。`src/shared/features/<f>/` から `drizzle-orm` か `node:fs` を import する
+   - 中規模以上で画面があるとき: `src/components/features/<f>/` から `src/server/features/<f>/index.ts` を import する(`components-no-server`)
+   - 画面があるとき: `make lint` では、3 階層以上さかのぼる相対パスの import(`../../../`)が失敗することも確かめる
 3. `echo '{"tool_input":{"file_path":"db/migrations/0001.sql"}}' | scripts/guard-paths.sh` が終了コード 2 で終わる。`.npmrc`、`pnpm-workspace.yaml`、`Makefile` でも同じく 2 で終わる。
 4. `make doctor` の registry が `https://npm.flatt.tech/` になっている。リポジトリの外の空のディレクトリで `npm view @panda-guard/test-malicious --registry=https://npm.flatt.tech/` を実行し、403 になる(Takumi Guard の検査用のパッケージ)。
 
 ## 段階を変えたとき
 
-`.dependency-cruiser.cjs` を新しい段階の雛形に差し替え、`vitest.config.ts` の `coverage.include` と ARCHITECTURE.md の構造の節を更新する。M から L へモジュール単位で昇格するときも `layered.cjs` にする(M の形のまま残したモジュールにも効く)。
+`.dependency-cruiser.cjs` を新しい段階の雛形(`small.cjs` か `medium.cjs`)に差し替え、`vitest.config.ts` の `coverage.include` と ARCHITECTURE.md の構造の節を更新する。ディレクトリの移し方は [構造の段階の選び方](../../references/scale-selection.md#段階の変更) に従う。

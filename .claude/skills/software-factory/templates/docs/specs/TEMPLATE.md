@@ -27,9 +27,10 @@
 
 ## 編集範囲
 
-- 影響するモジュール(S では feature): 
+- 影響する feature: 
 - 編集してよいパス:
-  - `src/modules/<module>/...`
+  - `src/server/features/<feature>/...`(小規模は `src/features/<feature>/...`)
+  - `src/components/features/<feature>/...`、`src/shared/features/<feature>/...`(中規模以上で使うとき)
   - `src/app/...`
 - 公開 API(`index.ts`)の変更: [なし / あり: 内容]
 - テーブルの変更: [なし / あり: マイグレーションの内容]

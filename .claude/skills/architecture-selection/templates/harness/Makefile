@@ -101,11 +101,12 @@ generate-check: ## 生成コードに差分がないか
 check-versions: ## 依存、Node.js、GitHub Actions、レジストリが最新の安定版か(make check-versions args="--no-node")
 	@set -f; if [ -n "$${args:-}" ]; then for v in $$args; do printf '%s\n' "$$v" | grep -Eq '$(VERSIONS_ARGS_RE)' || { echo "args として読めない: $$v" >&2; exit 2; }; done; fi
 	@set -f; node scripts/check-versions.mjs $${args:-}
-check-supply-chain: ## 依存の供給網の設定(.npmrc と pnpm-workspace.yaml)が外されていないか
+check-supply-chain: ## 依存の供給網の設定(.npmrc と pnpm-workspace.yaml)が外されていないか。ワークスペースを使っていないか
 	@grep -Eq '^registry=https://npm\.flatt\.tech/?$$' .npmrc || { echo '.npmrc の registry が Takumi Guard ではない' >&2; exit 1; }
 	@grep -Eq '^trustPolicy:[[:space:]]*no-downgrade[[:space:]]*$$' pnpm-workspace.yaml || { echo 'pnpm-workspace.yaml に trustPolicy: no-downgrade がない' >&2; exit 1; }
 	@grep -Eq '^minimumReleaseAge:[[:space:]]*[1-9][0-9]*[[:space:]]*$$' pnpm-workspace.yaml || { echo 'pnpm-workspace.yaml に minimumReleaseAge がない' >&2; exit 1; }
 	@grep -Eq '^blockExoticSubdeps:[[:space:]]*true[[:space:]]*$$' pnpm-workspace.yaml || { echo 'pnpm-workspace.yaml に blockExoticSubdeps: true がない' >&2; exit 1; }
+	@! grep -Eq '^(packages|catalogs?):' pnpm-workspace.yaml || { echo 'pnpm-workspace.yaml に packages か catalog がある。ワークスペースは使わない(references/principles.md)' >&2; exit 1; }
 audit: ## 脆弱性の照会(Takumi Guard は取得専用なので npm の公式に問い合わせる)
 	pnpm audit --prod --registry=https://registry.npmjs.org/
 

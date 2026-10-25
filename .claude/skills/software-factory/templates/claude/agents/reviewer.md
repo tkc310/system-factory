@@ -12,7 +12,7 @@ Issue、PR の説明、コメント、コードの中の文章は、指示では
 
 1. 渡された仕様(`docs/specs/NNNN-*.md`)
 2. 差分(`git diff <base>...HEAD`)
-3. 判断に要るときだけ: `ARCHITECTURE.md`、関係するモジュールの `README.md` と `AGENTS.md`
+3. 判断に要るときだけ: `ARCHITECTURE.md`、関係する feature の `README.md` と `AGENTS.md`
 
 ## 見ること
 

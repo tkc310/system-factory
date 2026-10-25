@@ -2,9 +2,8 @@
 // 初期構築時(と定期的な見直し時)に、使う道具と依存が最新の安定版かを確かめる。
 //
 // 調べるもの:
-//   1. package.json の dependencies / devDependencies / peerDependencies(workspace: catalog: file: link: git などは除く)
+//   1. package.json の dependencies / devDependencies / peerDependencies(file: link: git などは除く)
 //      - npm の dist-tags.latest(安定版)と比べる。指定がプレリリース(-alpha、-beta、-rc など)なら知らせる
-//      - pnpm-workspace.yaml の catalog があれば、その版も調べる
 //      - package.json の packageManager(pnpm@<版>)も調べる。書いていなければ知らせる
 //   2. Node.js: .tool-versions / .nvmrc / .node-version / package.json の engines と、最新の LTS を比べる
 //   3. GitHub Actions: .github/workflows/*.yml の uses: owner/repo@vN と、最新のリリースの major を比べる
@@ -96,28 +95,9 @@ function collectDeps() {
   const rootPkg = readJson(join(root, 'package.json'));
   const pm = typeof rootPkg?.packageManager === 'string' && rootPkg.packageManager.match(/^(pnpm|npm|yarn)@([^+]+)/);
   if (pm) put(pm[1], pm[2], 'package.json の packageManager');
-  const files = ['package.json'];
-  for (const dir of ['packages', 'apps']) {
-    if (!existsSync(join(root, dir))) continue;
-    for (const d of readdirSync(join(root, dir))) if (existsSync(join(root, dir, d, 'package.json'))) files.push(join(dir, d, 'package.json'));
-  }
-  for (const f of files) {
-    const pkg = readJson(join(root, f));
-    if (!pkg) continue;
-    for (const field of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']) {
-      for (const [name, spec] of Object.entries(pkg[field] || {})) put(name, spec, f);
-    }
-  }
-  // pnpm-workspace.yaml の catalog(単純な "name: spec" の行だけを読む)
-  const ws = join(root, 'pnpm-workspace.yaml');
-  if (existsSync(ws)) {
-    let inCatalog = false;
-    for (const line of readFileSync(ws, 'utf8').split('\n')) {
-      if (/^catalogs?:\s*$/.test(line)) { inCatalog = true; continue; }
-      if (/^\S/.test(line)) inCatalog = false;
-      const m = inCatalog && line.match(/^\s+['"]?([@\w./-]+)['"]?\s*:\s*['"]?([^'"\s#]+)['"]?/);
-      if (m && /\d/.test(m[2])) put(m[1], m[2], 'pnpm-workspace.yaml (catalog)');
-    }
+  // ワークスペースは使わないので、リポジトリ直下の package.json だけを読む
+  for (const field of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']) {
+    for (const [name, spec] of Object.entries(rootPkg?.[field] || {})) put(name, spec, 'package.json');
   }
   return deps;
 }
