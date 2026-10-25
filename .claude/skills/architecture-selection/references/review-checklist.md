@@ -5,7 +5,9 @@
 ## 前提と判定
 - [ ] ヒアリングの回答と、推測・仮定した項目(見直す条件つき)が ARCHITECTURE.md の「前提条件」にある
 - [ ] 構造の段階の判定に使った回答(人数、業務領域の数、ルールの複雑さと変更頻度)が ADR にある
-- [ ] 要件を満たす中で最も単純な段階を選んでいる。S と M に `domain/`、`ports.ts`、リポジトリ層、DI を作っていない
+- [ ] 要件を満たす中で単純な段階を選んでいる。`modules/`、`domain/`、`ports.ts`、リポジトリ層、DI を作っていない
+- [ ] ワークスペースを使っていない(`package.json` はリポジトリ直下の 1 つだけ、`apps/` と `packages/` がない、`pnpm-workspace.yaml` に `packages` と `catalog` がない)
+- [ ] 中規模以上では、1 つの機能が `src/components/features/`、`src/server/features/`、`src/shared/features/` で同じ feature 名になっている
 - [ ] 昇格と降格の条件が ADR にある
 
 ## 技術スタックと性能
@@ -23,7 +25,7 @@
 ## 構造とハーネス
 - [ ] ディレクトリ構成と `.dependency-cruiser.cjs` の段階が一致している
 - [ ] 画面があるとき、`ui/` が [コンポーネントの構造](./component-structure.md) に沿っている(PascalCase のディレクトリ、`index.tsx`、親子の入れ子、`shared/ui/` と `shared/ui/ds/`、D のときは `components/ui/` の分け方)
-- [ ] 各モジュール(S では feature)に `README.md` がある。M と L では加えて `AGENTS.md` と、所有するテーブルの一覧がある
+- [ ] 各 feature に `README.md` がある。中規模以上では加えて `AGENTS.md` と、所有するテーブルの一覧がある
 - [ ] 空の雛形で `make check` が通る
 - [ ] 境界違反のファイルを置くと `make lint-deps` が失敗する(確認後に削除した)
 - [ ] CI に品質ゲートの必須ステージ(フォーマット、lint と依存ルール、型、テストとカバレッジ、生成コードの差分、ビルド)がある

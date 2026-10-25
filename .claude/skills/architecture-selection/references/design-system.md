@@ -72,7 +72,7 @@
 
 ### 置き場所と構造
 
-- 取り込んだ部品は、段階によらず `src/shared/ui/ds/` に置き、feature やモジュールの `ui/` から import する。自分で書く共通の部品(`src/shared/ui/` の PascalCase のディレクトリ)と分けるため([コンポーネントの構造](./component-structure.md))。
+- 取り込んだ部品は、段階によらず `src/shared/ui/ds/` に置き、feature の `ui/`(中規模以上は `src/components/features/<feature>/`)から import する。自分で書く共通の部品(`src/shared/ui/` の PascalCase のディレクトリ)と分けるため([コンポーネントの構造](./component-structure.md))。
 - `components.json` の `aliases.ui` を `src/shared/ui/ds/` に、`aliases.lib` を `src/shared/lib/` に合わせる(8341-ui の `tv` などの共通処理が入る)。
 - 取り込んだ部品のファイルは手で書き換えない。直したいときは、8341-ui に Issue を出すか、プロジェクト側で包む部品を作る。
 - 部品を更新するときは、8341-ui の CHANGELOG(Releases の本文)で利用側の修正が要る変更(0.x では minor)を確かめ、`components.json` の URL の版を上げて、取り込んだ部品をすべて `make ui-update name="@8341/<name> …"` で取り込み直す。版を ARCHITECTURE.md にも書く。
@@ -141,7 +141,7 @@
 - CSS の入口は `src/styles/global.css` に 1 つだけ置き、`tailwindcss`、`foundation/tokens.css`、`foundation/tailwind-theme.css`、`foundation/utilities.css` の順に読む。画面のルートで一度だけ読み込む。
 - 画面は部品を `@/components/ui/<Name>/index` から import する。全部品をまとめて export する入口(`src/index.ts`)は作らない。
 - 部品の中の import は、`@/lib/*` を `@/styles/foundation/*` に書き換える。`@/components/ui/*` と `@/test/*` はそのまま使える(プロダクトの `@/` が `src/` を指すとき)。
-- このプロダクトの題材に依る部品は `src/components/ui/` に置かず、[コンポーネントの構造](./component-structure.md) のとおり `src/shared/ui/` か feature(モジュール)の `ui/` に置く。
+- このプロダクトの題材に依る部品は `src/components/ui/` に置かず、[コンポーネントの構造](./component-structure.md) のとおり `src/shared/ui/` か feature の `ui/`(中規模以上は `src/components/features/<feature>/`)に置く。
 
 ### 外すもの
 
@@ -182,7 +182,7 @@
 - 保護パスに、生成物(`tokens.css`、`tailwind-theme.css`、`tokens.json`、`tw-merge-config.ts`、`tokens/primitive/color.tokens.json`)と検査の基準(`tokens/contrast.rules.json`)を足す([編集制約](./editing-constraints.md#保護パス))。
 - dependency-cruiser に次を足す。
   - `src/styles/foundation/` は `src/` のほかの場所を import しない
-  - `src/components/ui/` が使えるのは、ほかの部品と `src/styles/foundation/` だけ(テストとストーリーは `src/test/` も)。アプリの層(feature、モジュール、`src/shared/`、入口)を import しない
+  - `src/components/ui/` が使えるのは、ほかの部品と `src/styles/foundation/` だけ(テストとストーリーは `src/test/` も)。アプリのコード(feature、`src/shared/`、`src/server/`、入口)を import しない
   - 部品同士と、アプリから部品へは、各ディレクトリの `index.tsx` を通す
   - Base UI(`@base-ui/react`)は `src/components/ui/` の中だけで使う
   - `src/shared/ui/` の import してよい先に、`src/components/ui/` と `src/styles/foundation/` を足す

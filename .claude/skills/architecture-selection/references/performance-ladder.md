@@ -27,7 +27,7 @@ Effect の Fiber は**一つのスレッドで動く軽量な並行処理**で�
 
 - 対象: 多数の外部呼び出しの並行実行、タイムアウト、再試行、キャンセル、流量の制御、ストリーム処理。
 - 手段: Effect の Fiber による構造化された並行処理、並行数の上限、`Stream`(背圧つき)、`Schedule`(再試行)。
-- 範囲: Effect は該当する command / query(L では application 層)の中だけで使う。公開 API の境界では Promise と Zod のスキーマを持つプレーンなデータに戻し、他のモジュールに Effect の型を漏らさない。エラー処理の方針(判別可能なユニオン、L では neverthrow)は変えない。
+- 範囲: Effect は該当する command / query の中だけで使う。公開 API の境界では Promise と Zod のスキーマを持つプレーンなデータに戻し、他の feature に Effect の型を漏らさない。エラー処理の方針(判別可能なユニオン、採用したサービスでは neverthrow)は変えない。
   - 理由: 導入範囲を性能の要る箇所に限れば、学習コストと書き方の混在を抑えられる。
 - Effect は版によって API 名が変わる(v4 は 2026 年 9 月に安定版)。導入時に公式ドキュメントで現行の書き方を確認する。
 
@@ -43,14 +43,14 @@ Effect の Fiber は**一つのスレッドで動く軽量な並行処理**で�
 - 手段: Rust と wasm-bindgen(wasm-pack)を既定とする。TypeScript に近い書き方を優先するなら AssemblyScript。
 - 原則:
   - WebAssembly にするのは**純粋な計算関数**だけ。I/O と業務ルールは TypeScript に残す。
-  - `packages/wasm-<name>/` に置き、TypeScript の薄いラッパーで包んで、外からは普通の関数に見せる。
+  - Rust のソースは `wasm/<name>/` に置き、wasm-pack の出力を `src/generated/wasm-<name>/` に書き出す。別の npm パッケージやワークスペースにはしない([構造](./principles.md#ワークスペースを使わない共通))。TypeScript の薄いラッパーで包んで、外からは普通の関数に見せる。
   - TypeScript の実装と結果が一致するかを確かめるテスト(差分テスト)と、ベンチマークを置く。
 
-## 5. Go(該当モジュールだけ切り出す)
+## 5. Go(該当する feature だけ切り出す)
 
 - 条件: 段階 1〜4 で要件を満たせないことを測定で示せる。または、単一バイナリでの配布など、運用上の明確な理由がある。
 - 原則([技術選定](./tech-selection.md#go-を選ぶとき) に従う):
-  - 切り出すのは、測定で特定したモジュールだけ。サービス全体を置き換えない。
+  - 切り出すのは、測定で特定した feature だけ。サービス全体を置き換えない。
   - TypeScript との境界は OpenAPI で定義し、双方の型を生成する(openapi-typescript、oapi-codegen など)。手書きの型を作らない。
   - ルーティングは標準の `net/http` から始める。DB アクセスは sqlc と pgx。
   - Go 側にもハーネスを置く: gofumpt、golangci-lint、`go test -race`、OpenAPI に対する契約テスト。Go のコマンドも同じ `Makefile` のターゲットにし(`make check` から Go の検査も呼ぶ)、入口を一つに保つ。
@@ -66,4 +66,4 @@ services/<name>/             # Go のサービス
   .golangci.yml
 ```
 
-- 切り出しを容易にするため、M と L では、切り出し候補のモジュールが他モジュールとテーブルやトランザクションを共有しない状態を保つ([技術選定](./tech-selection.md#go-のサービスへ切り出せる状態を保つ))。
+- 切り出しを容易にするため、中規模以上では、切り出し候補の feature が他の feature とテーブルやトランザクションを共有しない状態を保つ([技術選定](./tech-selection.md#go-のサービスへ切り出せる状態を保つ))。

@@ -4,7 +4,7 @@
 
 | 役割 | 工程 | 読むもの | 使えるツール | 書いてよいもの |
 | --- | --- | --- | --- | --- |
-| `planner` | 仕様化、計画 | Issue、ARCHITECTURE.md、ADR、関係するモジュールの README と AGENTS.md と `index.ts` | 読み取り(Read、Grep、Glob)、`docs/specs/` への書き込み | `docs/specs/` だけ |
+| `planner` | 仕様化、計画 | Issue、ARCHITECTURE.md、ADR、関係する feature の README と AGENTS.md と `index.ts` | 読み取り(Read、Grep、Glob)、`docs/specs/` への書き込み | `docs/specs/` だけ |
 | `implementer` | 実装 | 承認済みの仕様、編集範囲のファイル | 読み書き、Bash(許可リストの範囲) | 仕様の編集範囲だけ |
 | `reviewer` | 独立レビュー | 仕様と差分だけ。実装の経緯や会話は渡さない | 読み取りと、検査コマンドの実行 | 書かない。無人ジョブでは結果を `post-review.sh` で投稿する |
 | `retro` | 振り返り | PR、レビューの指摘、CI の失敗、LESSONS.md | 読み取り、`gh` の読み取り系コマンド、`docs/feedback/` への書き込み | `docs/feedback/` だけ |

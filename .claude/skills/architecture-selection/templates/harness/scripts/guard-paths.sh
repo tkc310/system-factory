@@ -71,7 +71,7 @@ case "$rel" in
 esac
 
 case "$rel" in
-  db/migrations/*|src/shared/auth/*|\
+  db/migrations/*|src/shared/auth/*|src/server/auth/*|\
   infra/*|.github/*|Dockerfile|.env|.env.*|*/.env|*/.env.*|\
   package.json|pnpm-lock.yaml|package-lock.json|yarn.lock|.npmrc|pnpm-workspace.yaml|\
   .cursor/*|.claude/*|scripts/guard-paths.sh|scripts/check-edited-file.sh|lefthook.yml|\

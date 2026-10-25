@@ -52,7 +52,7 @@ description: AI 駆動開発のソフトウェアファクトリー(工程、エ
      - 形式 B: lefthook + ルーティン。サブスクリプションの利用枠で動く。安全のための設定が多い
      - 決まらなければ形式 A を勧める
    - 秘密情報の検出に gitleaks を使えるか(組織のリポジトリではライセンスキーが要る)
-3. `templates/README.md` の手順で雛形を置く。角括弧を埋め、ARCHITECTURE.md の構造の段階(S / M / L)に合わせて、役割の定義の「読むもの」を調整する。
+3. `templates/README.md` の手順で雛形を置く。角括弧を埋め、ARCHITECTURE.md の構造の段階(小規模 / 中規模以上)に合わせて、役割の定義の「読むもの」を調整する。
 4. ARCHITECTURE.md の「編集制約」に、工場が追加した保護パスと強制の仕組みを書く。工場の導入を ADR に書く。
 5. 点検する(`references/audit-checklist.md` の「生成後の点検」)。
 6. ブランチ保護の設定(必須チェック、コードオーナーのレビュー、迂回の禁止)、シークレットの登録、ルーティンの作成は、権限の変更なので人に依頼する。手順(`templates/README.md`、形式 B では `templates/routines/README.md`)を示して、人が行う。

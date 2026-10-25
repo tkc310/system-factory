@@ -17,8 +17,7 @@
 <!-- 構造の段階の ADR では、判定に使った回答を書く -->
 - 開発人数: [ ]
 - 業務領域の数: [ ]
-- 業務ルールの複雑さと変更頻度: [ ]
-- 判定: [S / M / L] — architecture-selection スキルの references/scale-selection.md の判定 1〜3 のどれに当たったか
+- 判定: [小規模 / 中規模以上] — architecture-selection スキルの references/scale-selection.md の判定のどれに当たったか
 
 <!-- 性能対策の ADR では、測定の結果を書く -->
 - 測定の方法と結果: [ ]

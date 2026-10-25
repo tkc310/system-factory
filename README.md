@@ -3,7 +3,8 @@
 AI 駆動開発で使い回すための、設計と開発工程のボイラープレート。2 つのスキルで、新しいサービスのリポジトリに「アーキテクチャ」と「ソフトウェアファクトリー」を生成する。
 
 - フルスタック TypeScript を既定とし、性能が足りないと測定で分かったときだけ Effect → Worker → WebAssembly → Go の順に進む
-- 構造は、開発人数・業務領域の数・業務ルールの複雑さで S / M / L の 3 段階から選ぶ。シンプルな CRUD にドメイン層もリポジトリ層も作らない
+- 構造は、開発人数と業務領域の数で「小規模」と「中規模以上」の 2 段階から選ぶ。どちらもコードを feature で分け、モジュールや技術の層(ドメイン層、リポジトリ層)では分けない
+- 規模によらず、モノレポのワークスペース(`apps/`、`packages/`)を使わず、1 リポジトリ 1 パッケージにする
 - 画面があるときは、デザインシステムを「[8341-ui](https://github.com/tkc310/8341-ui) を使わない / 使う / ひな形に作って共有する / カスタマイズしてプロダクトに組み込む」から選ぶ
 - 境界は文章ではなく、型・oxlint・dependency-cruiser・テスト・フックで機械的に守る
 - コマンドの入口は `Makefile` に一つにし、人もエージェントも CI も `make` で叩く
@@ -41,7 +42,7 @@ cp -r .claude/skills/architecture-selection .claude/skills/software-factory <対
 スキルは次の順に進む。途中の質問には、分かる範囲で答える。答えられない項目は既定値で進み、仮定として記録される。
 
 1. ヒアリング(目的、利用者、負荷、画面の有無、開発人数、業務領域の数、ルールの複雑さなど)
-2. 構造の段階(S / M / L)の判定
+2. 構造の段階(小規模 / 中規模以上)の判定
 3. 技術スタックと、性能の要件があれば性能対策の段階
 4. 画面があれば、デザインシステムの選択(下の表)
 5. ディレクトリ構成、ハーネス(oxlint、oxfmt、dependency-cruiser、Vitest、lefthook、CI)、ARCHITECTURE.md、ADR の生成
@@ -101,9 +102,8 @@ cp -r .claude/skills/architecture-selection .claude/skills/software-factory <対
 
 | 段階 | 形 | 典型的な案件 |
 | --- | --- | --- |
-| S: slice | `features/` の Vertical Slice + CQS。層なし | 1〜2 人、CRUD 中心、仕様変更が少ない |
-| M: modular | `modules/` + 公開 API + テーブルの所有。層なし | 3 人以上、または業務領域が 3 つ以上 |
-| L: layered | `modules/` + domain / application / infrastructure | 4 人以上 かつ 複雑なドメインロジック かつ 仕様変更が頻繁 |
+| 小規模 | `src/features/<feature>/` の Vertical Slice + CQS。層なし | 1〜2 人、業務領域が 2 つ以下 |
+| 中規模以上 | `src/components/features/`(画面)、`src/server/features/`(サーバー)、`src/shared/features/`(両方で使う純粋なコード)に同じ名前の feature を置く。テーブルの所有。層なし([yorozuya](https://github.com/tkc310/yorozuya) の構成) | 3 人以上、または業務領域が 3 つ以上 |
 
 [software-factory](.claude/skills/software-factory/SKILL.md) は、architecture-selection の出力の上に、Claude Code 向けのソフトウェアファクトリーを載せる。
 
@@ -125,7 +125,7 @@ cp -r .claude/skills/architecture-selection .claude/skills/software-factory <対
 │   ├── human-approval.md       # 承認が要る操作(最優先)
 │   ├── security.md             # 秘密情報と外から入る文章(最優先)
 │   ├── hearing.md              # 前提条件のヒアリング
-│   ├── scale-selection.md      # S / M / L の判定と昇格・降格
+│   ├── scale-selection.md      # 小規模 / 中規模以上の判定と昇格・降格
 │   ├── tech-selection.md       # 技術選定と Go・Flutter の条件
 │   ├── performance-ladder.md   # 性能対策の段階
 │   ├── design-system.md        # デザインシステムの選択(8341-ui を使わない / 使う / 作って共有する / 組み込む)
@@ -140,8 +140,8 @@ cp -r .claude/skills/architecture-selection .claude/skills/software-factory <対
 └── templates/
     ├── ARCHITECTURE.md
     ├── adr.md
-    ├── module-AGENTS.md
-    └── harness/                # Makefile / AGENTS.md / oxlint / oxfmt / dependency-cruiser(S・M・L)/ Vitest / lefthook / CI / CODEOWNERS / 供給網(.npmrc、pnpm-workspace.yaml)/ 版の確認 / Claude Code と Cursor のフック
+    ├── feature-AGENTS.md
+    └── harness/                # Makefile / AGENTS.md / oxlint / oxfmt / dependency-cruiser(小規模・中規模以上)/ Vitest / lefthook / CI / CODEOWNERS / 供給網(.npmrc、pnpm-workspace.yaml)/ 版の確認 / Claude Code と Cursor のフック
 
 .claude/skills/software-factory/
 ├── SKILL.md

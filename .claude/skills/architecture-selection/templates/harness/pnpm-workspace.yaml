@@ -1,7 +1,7 @@
 # 依存の供給網の対策(ARCHITECTURE.md の「技術スタック」と、architecture-selection スキルの references/security.md)。
 # 保護パス。外すときは ADR と承認が要る。make install と make add は、これらが残っているかを先に確かめる。
 # pnpm 10.21 以上が必要(package.json の packageManager で版を固定し、engines.pnpm で下限を示す)。
-# 単一パッケージのリポジトリでも、pnpm の設定を置くためにこのファイルを置く。モノレポなら packages を足す。
+# pnpm の設定を置くためだけにこのファイルを置く。ワークスペースは使わないので、packages と catalog を書かない(make check-supply-chain が止める)。
 
 # 前の版より信頼の度合い(trusted publisher、provenance)が下がった版を入れない。
 # 公開者のアカウントの乗っ取りで、CI から公開されていた依存が手元から公開されたときに止まる。
