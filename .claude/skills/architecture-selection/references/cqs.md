@@ -48,7 +48,7 @@ service の切り出し方と、feature 間で呼べるもの(service と query 
 
 - 判断に使う業務ルール(不変条件、状態遷移、計算)は `src/api/features/<feature>/entity.ts` の純粋関数に置き、command から import する([構造](./principles.md#ドメインモデルentityts))。
 - command と query は ORM を直接使わず、同じ feature の `repository.ts` の関数で読み書きする([構造](./principles.md#リポジトリrepositoryts))。
-- 画面の入力検証にも使う入力の Zod のスキーマは `src/shared/features/<feature>/` に置き、command と画面で同じものを使う。サーバーだけで使うスキーマは command のファイルに書く。
+- 画面の入力検証にも使う入力の Zod のスキーマは `src/shared/features/<feature>/<名前>.schema.ts` に置き、command と画面で同じものを使う。サーバーだけで使うスキーマは command のファイルに書く。
 - command は、`repository.ts` で読む → `entity.ts` の関数で判断 → `repository.ts` で書く、の順に書く。判断の途中で I/O をしない。
   - 理由: 判断の部分を DB なしでテストでき、command のテストは書き込まれた内容と結果型の確認に絞れる。
 - neverthrow を採用したサービスでは、結果型を `Result` / `ResultAsync` で表す([エラー処理の方針](./tech-selection.md#エラー処理の方針))。

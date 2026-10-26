@@ -107,7 +107,7 @@ src/
     auth/                 # 認証・認可
   shared/                 # 画面とサーバーで共用するコード。app/、components/features/、api/ を import しない
     features/
-      <feature>/          # この feature の入力のバリデーション(Zod のスキーマ)、画面と API でやり取りするオブジェクトの型、定数
+      <feature>/          # この feature の入力のバリデーション(Zod のスキーマ。place-order.schema.ts)、画面と API でやり取りするオブジェクトの型、定数
     lib/                  # feature に依らない純粋な共通の関数
     ui/                   # 画面を持つとき: 共通の部品。ds/ にデザインシステムの部品
     layouts/              # 画面を持つとき: 全画面に共通する枠
@@ -250,7 +250,9 @@ db/migrations/
 
 **必須**
 
-- ファイル名とディレクトリ名は kebab-case にする。役割は接尾辞で示す(`*.command.ts`、`*.query.ts`、`*.service.ts`、`*.test.ts`)。
+- ファイル名とディレクトリ名は kebab-case にする。役割は接尾辞で示す(`*.command.ts`、`*.query.ts`、`*.service.ts`、`*.schema.ts`、`*.test.ts`)。
+- 検証のスキーマ(Zod などで型と検証ルールをまとめたもの)を置くファイルは `<名前>.schema.ts` にする(`place-order.schema.ts`)。`-schema.ts` や接尾辞の無い名前(`order.ts`)にしない。1 つの command / query だけが使うスキーマは、そのファイルの中に書いてよい。
+  - 理由: ファイル名だけで、形と検証を定める場所か、処理をする場所(command / query)かが分かる。
   - 例外: コンポーネントのディレクトリは PascalCase、本体は `index.tsx`、カスタムフックは `useXxx.ts` にする([コンポーネントの構造](./component-structure.md))。
 - feature 名は、利用者の業務の言葉にする(`billing`、`order`)。`utils`、`common`、`helpers` のような中身を示さない名前を `shared/` の外で使わない。
   - 理由: 名前から場所を推測できれば、エージェントがコードベース全体を検索しなくて済む。
