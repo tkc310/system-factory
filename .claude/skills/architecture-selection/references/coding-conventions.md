@@ -208,5 +208,6 @@ if (user.name === '') {
 **必須**
 
 - 命名は kebab-case(ファイル名、ディレクトリ名)、camelCase(変数名、関数名)、PascalCase(型名、クラス名、コンポーネント名)を使い分ける。詳細は [構造](./principles.md) の命名を参照。
+- 検証のスキーマを置くファイルは `<名前>.schema.ts` にする(`-schema.ts` にしない)。詳細は [構造](./principles.md) の命名を参照。
 - 行数の上限は、[構造](./principles.md) のファイルと関数の大きさを参照。
 
